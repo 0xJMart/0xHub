@@ -49,3 +49,27 @@ func (ve ValidationErrors) AsError() error {
 	}
 	return errors.Join(errs...)
 }
+
+// NotFoundError represents a missing domain entity.
+type NotFoundError struct {
+	Entity string
+}
+
+// Error implements the error interface.
+func (e NotFoundError) Error() string {
+	if e.Entity == "" {
+		return "resource not found"
+	}
+	return e.Entity + " not found"
+}
+
+// ErrNotFound constructs a NotFoundError for the provided entity name.
+func ErrNotFound(entity string) error {
+	return NotFoundError{Entity: entity}
+}
+
+// IsNotFound reports whether the error represents a missing entity.
+func IsNotFound(err error) bool {
+	var target NotFoundError
+	return errors.As(err, &target)
+}

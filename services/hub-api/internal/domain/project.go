@@ -22,12 +22,14 @@ const (
 type Project struct {
 	ID          uuid.UUID
 	CategoryID  *uuid.UUID
+	Category    *Category
 	Title       string
 	Slug        string
 	Summary     string
 	Description string
 	Status      ProjectStatus
 	HeroMediaID *uuid.UUID
+	HeroMedia   *MediaAsset
 	Tags        []Tag
 	Links       []ProjectLink
 	Media       []MediaAsset
@@ -78,6 +80,18 @@ func (p Project) Validate() ValidationErrors {
 	for i, media := range p.Media {
 		if mediaErrs := media.Validate(); mediaErrs.HasErrors() {
 			errs = append(errs, prefixErrors("media["+strconv.Itoa(i)+"]", mediaErrs)...)
+		}
+	}
+
+	if p.Category != nil {
+		if categoryErrs := p.Category.Validate(); categoryErrs.HasErrors() {
+			errs = append(errs, prefixErrors("category", categoryErrs)...)
+		}
+	}
+
+	if p.HeroMedia != nil {
+		if mediaErrs := p.HeroMedia.Validate(); mediaErrs.HasErrors() {
+			errs = append(errs, prefixErrors("heroMedia", mediaErrs)...)
 		}
 	}
 

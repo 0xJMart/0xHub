@@ -16,6 +16,9 @@ lint:
 test:
 	$(GO) test ./...
 
+test-api:
+	$(GO) test ./internal/app -count=1
+
 generate:
 	$(GO) generate ./...
 

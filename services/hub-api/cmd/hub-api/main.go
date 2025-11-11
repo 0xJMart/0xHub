@@ -3,18 +3,23 @@ package main
 import (
 	"context"
 	"log"
+	"os/signal"
+	"syscall"
 
 	"github.com/0xHub/hub-api/internal/app"
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	if err := run(ctx); err != nil {
 		log.Fatalf("hub-api failed: %v", err)
 	}
 }
 
 func run(ctx context.Context) error {
-	application := &app.Application{}
+	cfg := app.LoadConfig()
+	application := app.NewApplication(cfg, nil)
 	return application.Start(ctx)
 }
