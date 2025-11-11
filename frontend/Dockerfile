@@ -11,7 +11,7 @@ COPY frontend/package.json frontend/package.json
 COPY scripts ./scripts
 
 # Install only the frontend workspace (includes devDependencies for build)
-RUN npm_config_fund=false npm_config_audit=false npm_config_scripts=0 npm ci --workspace frontend --include-workspace-root=false
+RUN npm_config_fund=false npm_config_audit=false npm ci --workspace frontend --include-workspace-root=false
 
 # Copy the rest of the frontend sources and build
 COPY frontend ./frontend
