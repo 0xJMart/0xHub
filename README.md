@@ -16,7 +16,7 @@ Each workspace has its own README with ownership details, local development comm
 
 1. Install local toolchains (already vendored for convenience):
    - Go 1.24.10 at `/home/admin/go/bin` (the repository go.mod pins `go 1.23` with toolchain delegation to 1.24.10)
-   - Node.js 20.19.0 at `/home/admin/node-v20.19.0-linux-x64/bin`
+   - Node.js 25.1.0 (via `nvm use 25.1.0`)
 2. Install npm dependencies for all workspaces:
 
    ```bash
@@ -44,5 +44,6 @@ Each workspace has its own README with ownership details, local development comm
 - `config/env.example` – reference environment variables for local/CI.
 - `docker-compose.dev.yml` – full local stack (Postgres, Redis, MinIO, Keycloak, services).
 - `docker-compose.ci.yml` – minimal stack optimised for CI pipelines.
-- `deploy/api/openapi.yaml` – source-of-truth contract for the Phase 1 Hub API surface.
+- `deploy/api/openapi.yaml` – source-of-truth contract for the Hub API surface (Phase 2 domain now implemented).
+- `packages/shared/api` – published TypeScript client (`@0xhub/api`) for interacting with the Hub API.
 

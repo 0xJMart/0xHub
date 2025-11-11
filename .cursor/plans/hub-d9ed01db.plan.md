@@ -36,18 +36,19 @@
 - `cd services/hub-api && go test ./...`
 - Goose migrations apply cleanly against a local Postgres instance with `pgcrypto`.
 
-## Phase 2 – Service Layer & HTTP API
+## Phase 2 – Service Layer & HTTP API ✅ Completed
 
 - Outcomes: functional Go service exposing REST endpoints backed by the domain logic.
-- Actionable Steps:
+- Summary:
+  - Repository ports defined with a Postgres adapter that hydrates categories, tags, links, and media.
+  - Application services encapsulate project CRUD, tag listing, and readiness checks with structured logging.
+  - Gin HTTP server delivers `/healthz`, `/readyz`, `/projects`, `/projects/{slug}`, and `/tags` with consistent error payloads.
+  - Shared TypeScript client published at `packages/shared/api` (`@0xhub/api`) mirroring the OpenAPI contract.
+  - Make targets `make test` and `make test-api` run Vitest Storybook checks plus Go handler/service smoke tests.
 
-1. Create repository interfaces in `internal/ports` with a single Postgres adapter; skip Redis/MinIO until they are required.
-2. Implement use cases in `internal/app` covering project CRUD and tag filtering; focus on clear error handling and simple logging.
-3. Build Gin handlers with basic middleware (request logging, panic recovery) and JSON request/response validation using `go-playground/validator`.
-4. Expose `/healthz` and `/readyz` endpoints for Docker health checks; return friendly error payloads for failed requests.
-5. Generate a minimal TypeScript client (using `openapi-typescript` or a hand-written client) and publish it in `packages/shared/api` for the frontend to consume.
-
-- Testing: maintain Go unit tests for handlers/services plus a small set of smoke tests hitting the running API via `make test-api`.
+- Validation:
+  - `npm run lint`, `npm run typecheck`, `npm run test`
+  - `go test ./...`, `make test-api`
 
 ## Phase 3 – UI Shell & Core Views
 
