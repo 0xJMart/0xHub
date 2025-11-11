@@ -6,15 +6,15 @@
 - Outcomes: repository structure, coding standards, CI guardrails, and baseline architecture governance.
 - Actionable Steps:
 
-1. Stand up mono-repo skeleton: `frontend/`, `services/hub-api/`, `deploy/`, `docs/`, `packages/shared/` (shared schemas, utilities) with README mapping module boundaries and ownership.
-2. Initialize Go module (confirming the final import path, e.g., `go mod init github.com/0xHub/hub-api`), create internal package layout (`internal/app`, `internal/domain`, `internal/ports`, `internal/adapters`) to support clean architecture, and add Makefile targets (`make lint`, `make test`, `make docker-build`, `make generate`).
-3. Bootstrap Vite + React + TypeScript workspace; configure ESLint, Prettier, Tailwind, Storybook, and NX/Turborepo (optional) for incremental builds; define absolute import aliases and shared UI component library.
-4. Draft common `.editorconfig`, `.gitignore`, `.gitattributes`, commit hooks (lefthook/Husky) enforcing formatting, linting, and security scans pre-commit; add Renovate/Dependabot configuration for automated dependency PRs.
-5. Author baseline Dockerfiles for `hub-api` (multi-stage build with distroless runtime) and `frontend` (build + nginx serve with security headers); create docker-compose files (`docker-compose.dev.yml`, `docker-compose.ci.yml`) for local/CI parity.
-6. Scaffold Helm chart (`deploy/helm/hub`) with modular templates (deployments, services, ingress, config maps, secrets, service monitors) and default values mapping to environment overlays; include helper templates for annotations and feature toggles.
-7. Configure GitHub Actions (or preferred CI) with reusable workflow templates covering lint/test/build, container scan, SBOM generation, Helm lint (`ct lint`), and contract test stages; publish status badges to repo README.
-8. Provision local `docker compose` stack for Postgres, Redis, MinIO, Keycloak; integrate `make dev-up`/`dev-down` scripts and documentation; ensure `.env.example` provides modular configuration via environment variables; automate Keycloak realm/client bootstrap via import scripts or seeded REST calls so auth roles stay consistent across environments.
-9. Establish architecture decision record (ADR) template and contribute initial ADR covering Option B stack, mono-repo structure, and config strategy.
+1. ✅ Stand up mono-repo skeleton: `frontend/`, `services/hub-api/`, `deploy/`, `docs/`, `packages/shared/` (shared schemas, utilities) with README mapping module boundaries and ownership.
+2. ✅ Initialize Go module (confirming the final import path, e.g., `go mod init github.com/0xHub/hub-api`), create internal package layout (`internal/app`, `internal/domain`, `internal/ports`, `internal/adapters`) to support clean architecture, and add Makefile targets (`make lint`, `make test`, `make docker-build`, `make generate`).
+3. ✅ Bootstrap Vite + React + TypeScript workspace; configure ESLint, Prettier, Tailwind, Storybook, and NX/Turborepo (optional) for incremental builds; define absolute import aliases and shared UI component library.
+4. ✅ Draft common `.editorconfig`, `.gitignore`, `.gitattributes`, commit hooks (lefthook/Husky) enforcing formatting, linting, and security scans pre-commit; add Renovate/Dependabot configuration for automated dependency PRs.
+5. ✅ Author baseline Dockerfiles for `hub-api` (multi-stage build with distroless runtime) and `frontend` (build + nginx serve with security headers); create docker-compose files (`docker-compose.dev.yml`, `docker-compose.ci.yml`) for local/CI parity.
+6. ✅ Scaffold Helm chart (`deploy/helm/hub`) with modular templates (deployments, services, ingress, config maps, secrets, service monitors) and default values mapping to environment overlays; include helper templates for annotations and feature toggles.
+7. ✅ Configure GitHub Actions (or preferred CI) with reusable workflow templates covering lint/test/build, container scan, SBOM generation, Helm lint (`ct lint`), and contract test stages; publish status badges to repo README.
+8. ✅ Provision local `docker compose` stack for Postgres, Redis, MinIO, Keycloak; integrate `make dev-up`/`dev-down` scripts and documentation; ensure `.env.example` provides modular configuration via environment variables; automate Keycloak realm/client bootstrap via import scripts or seeded REST calls so auth roles stay consistent across environments.
+9. ✅ Establish architecture decision record (ADR) template and contribute initial ADR covering Option B stack, mono-repo structure, and config strategy.
 
 - Testing: execute `golangci-lint`, `go test ./...`, `eslint`, `vitest`, `storybook build`, `helm lint`, `chart-testing lint` and ensure CI workflows run end-to-end.
 

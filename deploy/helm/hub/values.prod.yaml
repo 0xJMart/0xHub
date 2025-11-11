@@ -1,0 +1,56 @@
+image:
+  tag: "prod"
+
+frontendImage:
+  tag: "prod"
+
+global:
+  replicaCount: 3
+  podAnnotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+
+hubApi:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  env:
+    POSTGRES_DSN: postgres://hub:hubsecret@postgres.prod:5432/hub?sslmode=require
+    REDIS_ADDR: redis.prod:6379
+    MINIO_ENDPOINT: https://minio.prod.0xhub.com
+    MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+    MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    KEYCLOAK_URL: https://sso.0xhub.com
+
+frontend:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 400m
+      memory: 512Mi
+  env:
+    VITE_HUB_API_URL: https://api.0xhub.com
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: hub.0xhub.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: hub-prod-tls
+      hosts:
+        - hub.0xhub.com
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+

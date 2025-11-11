@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "0xhub/platform"
+    commit-message:
+      prefix: "deps"
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+  - package-ecosystem: "gomod"
+    directory: "/services/hub-api"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+

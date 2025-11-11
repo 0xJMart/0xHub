@@ -1,0 +1,49 @@
+image:
+  tag: "staging"
+
+frontendImage:
+  tag: "staging"
+
+global:
+  replicaCount: 2
+
+hubApi:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    POSTGRES_DSN: postgres://hub:hubsecret@postgres.staging:5432/hub?sslmode=disable
+    REDIS_ADDR: redis.staging:6379
+    MINIO_ENDPOINT: http://minio.staging:9000
+    MINIO_ACCESS_KEY: minioadmin
+    MINIO_SECRET_KEY: minioadmin
+    KEYCLOAK_URL: https://sso.staging.0xhub.com
+
+frontend:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+  env:
+    VITE_HUB_API_URL: https://api.staging.0xhub.com
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: hub.staging.0xhub.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: hub-staging-tls
+      hosts:
+        - hub.staging.0xhub.com
+

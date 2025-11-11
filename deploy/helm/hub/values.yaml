@@ -1,0 +1,67 @@
+global:
+  imagePullSecrets: []
+  podAnnotations: {}
+  replicaCount: 1
+
+image:
+  repository: ghcr.io/0xhub/hub-api
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+frontendImage:
+  repository: ghcr.io/0xhub/hub-frontend
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+hubApi:
+  service:
+    type: ClusterIP
+    port: 8080
+  env:
+    POSTGRES_DSN: ""
+    REDIS_ADDR: ""
+    MINIO_ENDPOINT: ""
+    MINIO_ACCESS_KEY: ""
+    MINIO_SECRET_KEY: ""
+    KEYCLOAK_URL: ""
+  resources: {}
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 15
+    periodSeconds: 10
+  readinessProbe:
+    enabled: true
+    path: /readyz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+frontend:
+  service:
+    type: ClusterIP
+    port: 80
+  env: {}
+  resources: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: hub.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+monitoring:
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    additionalLabels: {}
+

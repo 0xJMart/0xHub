@@ -1,0 +1,32 @@
+image:
+  tag: "dev"
+
+frontendImage:
+  tag: "dev"
+
+hubApi:
+  env:
+    POSTGRES_DSN: postgres://hub:hubsecret@postgres.dev:5432/hub?sslmode=disable
+    REDIS_ADDR: redis.dev:6379
+    MINIO_ENDPOINT: http://minio.dev:9000
+    MINIO_ACCESS_KEY: minioadmin
+    MINIO_SECRET_KEY: minioadmin
+    KEYCLOAK_URL: https://sso.dev.0xhub.com
+
+frontend:
+  env:
+    VITE_HUB_API_URL: https://api.dev.0xhub.com
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: hub.dev.0xhub.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: hub-dev-tls
+      hosts:
+        - hub.dev.0xhub.com
+
