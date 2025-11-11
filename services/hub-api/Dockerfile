@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.6
 
-ARG GO_VERSION=1.22.5
+ARG GO_VERSION=1.24.10
 FROM golang:${GO_VERSION}-bullseye AS builder
 
 WORKDIR /workspace
