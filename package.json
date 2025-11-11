@@ -7,7 +7,8 @@
   ],
   "scripts": {
     "install:frontend": "npm install --workspace frontend",
-    "prepare": "husky",
+    "prepare": "node scripts/husky-prepare.js",
+    "postinstall": "node scripts/husky-prepare.js",
     "lint": "npm run lint --workspaces",
     "format": "npm run format --workspaces",
     "typecheck": "npm run typecheck --if-present --workspaces",

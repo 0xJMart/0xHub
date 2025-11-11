@@ -1,6 +1,3 @@
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from 'eslint-plugin-storybook'
-
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -9,20 +6,29 @@ import storybookPlugin from 'eslint-plugin-storybook'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
+const reactHooksRules = reactHooks.configs['recommended-latest']?.rules ?? {}
+const storybookConfig = storybookPlugin.configs['flat/recommended'] ?? []
+
 export default defineConfig([
   globalIgnores(['dist']),
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-      reactHooks.configs['recommended-latest'],
-      reactRefresh.configs.vite,
-      storybookPlugin.configs['flat/recommended'],
-    ],
+    files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
     },
   },
+  {
+    files: ['**/*.{ts,tsx}'],
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      ...reactHooksRules,
+    },
+  },
+  reactRefresh.configs.vite,
+  ...storybookConfig,
 ])
