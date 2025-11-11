@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npm exec --workspace frontend playwright install --with-deps
       - name: Lint
         run: npm run lint --workspace frontend
       - name: Typecheck
