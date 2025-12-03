@@ -13,3 +13,7 @@ Thumbs.db
 # Logs
 *.log
 
+# Binaries (should be installed via package managers or scripts)
+kind
+kubectl
+
