@@ -1,0 +1,10 @@
+apiVersion: hub.0xhub.io/v1
+kind: Project
+metadata:
+  name: minimal-project
+  namespace: default
+spec:
+  name: Minimal Project
+  description: A project with only required fields
+  url: https://minimal.example.com
+
