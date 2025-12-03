@@ -1,16 +1,8 @@
 /// <reference types="vitest/config" />
-import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
-import { playwright } from '@vitest/browser-playwright'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
-
-const rootDir =
-  typeof __dirname !== 'undefined'
-    ? __dirname
-    : fileURLToPath(new URL('.', import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -21,31 +13,22 @@ export default defineConfig({
     },
   },
   test: {
-    projects: [
-      {
-        extends: true,
-        plugins: [
-          // The plugin will run tests for the stories defined in your Storybook config
-          // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-          storybookTest({
-            configDir: path.join(rootDir, '.storybook'),
-          }),
-        ],
-        test: {
-          name: 'storybook',
-          browser: {
-            enabled: true,
-            headless: true,
-            provider: playwright({}),
-            instances: [
-              {
-                browser: 'chromium',
-              },
-            ],
-          },
-          setupFiles: ['.storybook/vitest.setup.ts'],
-        },
-      },
-    ],
+    environment: 'jsdom',
+    globals: true,
+    css: true,
+    setupFiles: ['./src/test-utils/setupTests.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
+    exclude: ['tests/**'],
+    coverage: {
+      reporter: ['text', 'lcov'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.stories.{ts,tsx,mdx}',
+        'src/**/*.test.{ts,tsx}',
+        'src/stories/**',
+        'src/mocks/**',
+        'src/test-utils/**',
+      ],
+    },
   },
 })

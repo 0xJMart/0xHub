@@ -40,15 +40,15 @@
 
 - Outcomes: functional Go service exposing REST endpoints backed by the domain logic.
 - Summary:
-  - Repository ports defined with a Postgres adapter that hydrates categories, tags, links, and media.
-  - Application services encapsulate project CRUD, tag listing, and readiness checks with structured logging.
-  - Gin HTTP server delivers `/healthz`, `/readyz`, `/projects`, `/projects/{slug}`, and `/tags` with consistent error payloads.
-  - Shared TypeScript client published at `packages/shared/api` (`@0xhub/api`) mirroring the OpenAPI contract.
-  - Make targets `make test` and `make test-api` run Vitest Storybook checks plus Go handler/service smoke tests.
+- Repository ports defined with a Postgres adapter that hydrates categories, tags, links, and media.
+- Application services encapsulate project CRUD, tag listing, and readiness checks with structured logging.
+- Gin HTTP server delivers `/healthz`, `/readyz`, `/projects`, `/projects/{slug}`, and `/tags` with consistent error payloads.
+- Shared TypeScript client published at `packages/shared/api` (`@0xhub/api`) mirroring the OpenAPI contract.
+- Make targets `make test` and `make test-api` run Vitest Storybook checks plus Go handler/service smoke tests.
 
 - Validation:
-  - `npm run lint`, `npm run typecheck`, `npm run test`
-  - `go test ./...`, `make test-api`
+- `npm run lint`, `npm run typecheck`, `npm run test`
+- `go test ./...`, `make test-api`
 
 ## Phase 3 – UI Shell & Core Views
 

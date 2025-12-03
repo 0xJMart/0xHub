@@ -2,20 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light dark;
-}
+@layer base {
+  :root {
+    color-scheme: dark;
+    font-family: theme('fontFamily.sans');
+    background-color: theme('colors.surface.DEFAULT');
+    color: theme('colors.text.DEFAULT');
+  }
 
-body {
-  min-height: 100vh;
-  margin: 0;
-  background-color: #020617;
-  color: #f8fafc;
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
+  body {
+    @apply min-h-screen bg-surface text-text antialiased;
+  }
+
+  ::selection {
+    @apply bg-brand/30 text-text;
+  }
 }
