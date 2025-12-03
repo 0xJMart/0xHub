@@ -1,9 +1,0 @@
-apiVersion: v2
-name: hub
-description: Helm chart for the 0xHub platform (backend + frontend)
-type: application
-version: 0.1.0
-appVersion: "0.1.0"
-maintainers:
-  - name: 0xHub Platform Team
-
