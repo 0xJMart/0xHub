@@ -1,0 +1,73 @@
+# Default values for 0xhub
+# This is a YAML-formatted file.
+
+# Backend configuration
+backend:
+  image:
+    repository: 0xhub/backend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Frontend configuration
+frontend:
+  image:
+    repository: 0xhub/frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Operator configuration
+operator:
+  image:
+    repository: 0xhub/operator
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  backendURL: "http://0xhub-backend:8080"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# CRD installation
+crd:
+  install: true
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Service account
+serviceAccount:
+  create: true
+  name: ""
+
+# Namespace
+namespace:
+  create: true
+  name: "0xhub"
+

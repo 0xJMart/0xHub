@@ -53,6 +53,14 @@ type ProjectStatus struct {
 	// Error contains an error message if sync failed
 	// +optional
 	Error string `json:"error,omitempty"`
+
+	// RetryCount is the number of retry attempts for failed syncs
+	// +optional
+	RetryCount int `json:"retryCount,omitempty"`
+
+	// LastRetryAt is the timestamp of the last retry attempt
+	// +optional
+	LastRetryAt *metav1.Time `json:"lastRetryAt,omitempty"`
 }
 
 // +kubebuilder:object:root=true

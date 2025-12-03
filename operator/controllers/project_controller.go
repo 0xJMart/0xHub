@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"0xhub/operator/api/v1"
@@ -13,6 +14,15 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+const (
+	// Base retry delay
+	baseRetryDelay = 30 * time.Second
+	// Maximum retry delay (5 minutes)
+	maxRetryDelay = 5 * time.Minute
+	// Maximum retry count before giving up (will still retry but with max delay)
+	maxRetryCount = 10
 )
 
 // ProjectReconciler reconciles a Project object
@@ -49,13 +59,24 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		logger.Info("Project is being deleted, removing from backend", "project", req.Name)
 		if err := r.BackendClient.DeleteProject(req.Name); err != nil {
 			logger.Error(err, "Failed to delete project from backend", "project", req.Name)
-			// Update status with error
+			// Update status with error and retry info
+			retryDelay := r.calculateRetryDelay(project.Status.RetryCount)
 			project.Status.Error = fmt.Sprintf("Failed to delete: %v", err)
 			project.Status.Synced = false
+			project.Status.RetryCount++
+			now := time.Now()
+			project.Status.LastRetryAt = &metav1.Time{Time: now}
 			if updateErr := r.Status().Update(ctx, project); updateErr != nil {
 				return ctrl.Result{}, updateErr
 			}
-			return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+			logger.Info("Will retry deletion", "project", req.Name, "retryCount", project.Status.RetryCount, "retryAfter", retryDelay)
+			return ctrl.Result{RequeueAfter: retryDelay}, nil
+		}
+		// Reset retry count on success
+		project.Status.RetryCount = 0
+		project.Status.Error = ""
+		if updateErr := r.Status().Update(ctx, project); updateErr != nil {
+			logger.Error(updateErr, "Failed to update status after successful delete")
 		}
 		return ctrl.Result{}, nil
 	}
@@ -77,34 +98,47 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		// Project doesn't exist, create it
 		logger.Info("Creating project in backend", "project", req.Name)
 		if err := r.BackendClient.CreateProject(backendProject); err != nil {
-			logger.Error(err, "Failed to create project in backend", "project", req.Name)
+			logger.Error(err, "Failed to create project in backend", "project", req.Name, "retryCount", project.Status.RetryCount)
+			// Update status with error and retry info
+			retryDelay := r.calculateRetryDelay(project.Status.RetryCount)
 			project.Status.Error = fmt.Sprintf("Failed to create: %v", err)
 			project.Status.Synced = false
+			project.Status.RetryCount++
+			now := time.Now()
+			project.Status.LastRetryAt = &metav1.Time{Time: now}
 			if updateErr := r.Status().Update(ctx, project); updateErr != nil {
 				return ctrl.Result{}, updateErr
 			}
-			return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+			logger.Info("Will retry creation", "project", req.Name, "retryCount", project.Status.RetryCount, "retryAfter", retryDelay)
+			return ctrl.Result{RequeueAfter: retryDelay}, nil
 		}
 	} else {
-		// Project exists, update it
-		logger.Info("Updating project in backend", "project", req.Name)
-		if err := r.BackendClient.UpdateProject(req.Name, backendProject); err != nil {
-			logger.Error(err, "Failed to update project in backend", "project", req.Name)
-			project.Status.Error = fmt.Sprintf("Failed to update: %v", err)
-			project.Status.Synced = false
-			if updateErr := r.Status().Update(ctx, project); updateErr != nil {
-				return ctrl.Result{}, updateErr
+		// Project exists, check if update is needed
+		needsUpdate := existingProject.Name != backendProject.Name ||
+			existingProject.Description != backendProject.Description ||
+			existingProject.URL != backendProject.URL ||
+			existingProject.Icon != backendProject.Icon ||
+			existingProject.Category != backendProject.Category ||
+			existingProject.Status != backendProject.Status
+
+		if needsUpdate {
+			logger.Info("Updating project in backend", "project", req.Name)
+			if err := r.BackendClient.UpdateProject(req.Name, backendProject); err != nil {
+				logger.Error(err, "Failed to update project in backend", "project", req.Name, "retryCount", project.Status.RetryCount)
+				// Update status with error and retry info
+				retryDelay := r.calculateRetryDelay(project.Status.RetryCount)
+				project.Status.Error = fmt.Sprintf("Failed to update: %v", err)
+				project.Status.Synced = false
+				project.Status.RetryCount++
+				now := time.Now()
+				project.Status.LastRetryAt = &metav1.Time{Time: now}
+				if updateErr := r.Status().Update(ctx, project); updateErr != nil {
+					return ctrl.Result{}, updateErr
+				}
+				logger.Info("Will retry update", "project", req.Name, "retryCount", project.Status.RetryCount, "retryAfter", retryDelay)
+				return ctrl.Result{RequeueAfter: retryDelay}, nil
 			}
-			return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
-		}
-		// Check if update is needed (compare specs)
-		if existingProject.Name == backendProject.Name &&
-			existingProject.Description == backendProject.Description &&
-			existingProject.URL == backendProject.URL &&
-			existingProject.Icon == backendProject.Icon &&
-			existingProject.Category == backendProject.Category &&
-			existingProject.Status == backendProject.Status {
-			// No changes needed, but update status anyway
+		} else {
 			logger.Info("Project already in sync", "project", req.Name)
 		}
 	}
@@ -114,6 +148,9 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	project.Status.Synced = true
 	project.Status.LastSyncedAt = &metav1.Time{Time: now}
 	project.Status.Error = ""
+	// Reset retry count on success
+	project.Status.RetryCount = 0
+	project.Status.LastRetryAt = nil
 
 	if err := r.Status().Update(ctx, project); err != nil {
 		logger.Error(err, "Failed to update project status", "project", req.Name)
@@ -122,6 +159,21 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	logger.Info("Successfully synced project to backend", "project", req.Name)
 	return ctrl.Result{}, nil
+}
+
+// calculateRetryDelay calculates exponential backoff delay with jitter
+func (r *ProjectReconciler) calculateRetryDelay(retryCount int) time.Duration {
+	if retryCount >= maxRetryCount {
+		return maxRetryDelay
+	}
+
+	// Exponential backoff: baseDelay * 2^retryCount
+	delay := float64(baseRetryDelay) * math.Pow(2, float64(retryCount))
+	if delay > float64(maxRetryDelay) {
+		delay = float64(maxRetryDelay)
+	}
+
+	return time.Duration(delay)
 }
 
 // SetupWithManager sets up the controller with the Manager.

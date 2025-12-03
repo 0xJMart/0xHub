@@ -1,0 +1,17 @@
+apiVersion: v2
+name: 0xhub
+description: A Helm chart for 0xHub - Project Hub with CRD Operator
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - project-hub
+  - kubernetes
+  - operator
+  - crd
+maintainers:
+  - name: 0xHub Team
+home: https://github.com/yourorg/0xhub
+sources:
+  - https://github.com/yourorg/0xhub
+
