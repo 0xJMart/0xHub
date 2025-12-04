@@ -1,0 +1,92 @@
+name: Operator CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'operator/**'
+      - '.github/workflows/operator.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'operator/**'
+      - '.github/workflows/operator.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Operator Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: operator/go.sum
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-operator-${{ hashFiles('operator/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-operator-
+
+      - name: Download dependencies
+        working-directory: operator
+        run: go mod download
+
+      - name: Run gofmt check
+        working-directory: operator
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "Code is not formatted. Run 'gofmt -s -w .'"
+            gofmt -s -d .
+            exit 1
+          fi
+
+      - name: Run tests
+        working-directory: operator
+        run: go test ./... -v
+
+      - name: Generate coverage report
+        working-directory: operator
+        run: go test -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Install bc
+        run: sudo apt-get update && sudo apt-get install -y bc
+
+      - name: Check coverage threshold
+        working-directory: operator
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Coverage: ${COVERAGE}%"
+          THRESHOLD=70
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "Coverage ${COVERAGE}% is below threshold of ${THRESHOLD}%"
+            exit 1
+          fi
+
+      - name: Upload coverage to artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: operator-coverage
+          path: operator/coverage.out
+
+      - name: Build operator binary
+        working-directory: operator
+        run: make build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        working-directory: operator
+        run: make docker-build
+
