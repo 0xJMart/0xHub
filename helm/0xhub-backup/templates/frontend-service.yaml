@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "0xhub.frontend.fullname" . }}
+  namespace: {{ include "0xhub.namespace" . }}
+  labels:
+    {{- include "0xhub.frontend.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - port: {{ .Values.frontend.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "0xhub.frontend.selectorLabels" . | nindent 4 }}
+

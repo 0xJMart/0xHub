@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "0xhub.operator.fullname" . }}
+  namespace: {{ include "0xhub.namespace" . }}
+  labels:
+    {{- include "0xhub.operator.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.operator.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "0xhub.operator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.operator.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "0xhub.operator.selectorLabels" . | nindent 8 }}
+        {{- with .Values.operator.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "0xhub.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.operator.podSecurityContext | nindent 8 }}
+      containers:
+        - name: manager
+          securityContext:
+            {{- toYaml .Values.operator.securityContext | nindent 12 }}
+          image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
+          command:
+            - /manager
+          args:
+            - --backend-url={{ .Values.operator.backendURL | default (printf "http://%s:%d" (include "0xhub.backend.fullname" .) .Values.backend.service.port) }}
+            - --metrics-bind-address=:8080
+            - --health-probe-bind-address=:8081
+            {{- if .Values.operator.leaderElection }}
+            - --leader-elect
+            {{- end }}
+            {{- with .Values.operator.args }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+            - name: health
+              containerPort: 8081
+              protocol: TCP
+          env:
+            - name: BACKEND_URL
+              value: {{ .Values.operator.backendURL | default (printf "http://%s:%d" (include "0xhub.backend.fullname" .) .Values.backend.service.port) | quote }}
+            {{- with .Values.operator.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.operator.resources | nindent 12 }}
+      {{- with .Values.operator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+

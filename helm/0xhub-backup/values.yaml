@@ -1,0 +1,188 @@
+# Default values for 0xhub
+# This is a YAML-formatted file.
+
+# Global settings
+nameOverride: ""
+fullnameOverride: ""
+
+# Image pull secrets
+imagePullSecrets: []
+# - name: regcred
+
+# Backend configuration
+backend:
+  image:
+    repository: 0xhub/backend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  # Additional environment variables
+  env: []
+  # - name: ENV_VAR
+  #   value: "value"
+  # Pod security context
+  podSecurityContext: {}
+    # fsGroup: 2000
+  # Container security context
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+  # Pod annotations
+  podAnnotations: {}
+  # Pod labels
+  podLabels: {}
+  # Node selector
+  nodeSelector: {}
+  # Tolerations
+  tolerations: []
+  # Affinity
+  affinity: {}
+
+# Frontend configuration
+frontend:
+  image:
+    repository: 0xhub/frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  # Additional environment variables
+  env: []
+  # - name: ENV_VAR
+  #   value: "value"
+  # Pod security context
+  podSecurityContext: {}
+    # fsGroup: 2000
+  # Container security context
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+  # Pod annotations
+  podAnnotations: {}
+  # Pod labels
+  podLabels: {}
+  # Node selector
+  nodeSelector: {}
+  # Tolerations
+  tolerations: []
+  # Affinity
+  affinity: {}
+
+# Operator configuration
+operator:
+  image:
+    repository: 0xhub/operator
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  # Backend URL (defaults to auto-generated service URL if not set)
+  backendURL: ""
+  # Enable leader election for HA
+  leaderElection: true
+  # Additional command arguments
+  args: []
+  # Additional environment variables
+  env: []
+  # - name: ENV_VAR
+  #   value: "value"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  # Pod security context
+  podSecurityContext: {}
+    # fsGroup: 2000
+  # Container security context
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+  # Pod annotations
+  podAnnotations: {}
+  # Pod labels
+  podLabels: {}
+  # Node selector
+  nodeSelector: {}
+  # Tolerations
+  tolerations: []
+  # Affinity
+  affinity: {}
+
+# CRD installation
+crd:
+  install: true
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Service account
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+    # eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+
+# Namespace
+namespace:
+  create: true
+  name: "0xhub"
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: 0xhub.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: 0xhub-tls
+  #    hosts:
+  #      - 0xhub.local
+
+# Autoscaling (for future use)
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+
