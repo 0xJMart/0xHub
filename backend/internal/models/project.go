@@ -10,4 +10,3 @@ type Project struct {
 	Category    string `json:"category,omitempty"`
 	Status      string `json:"status,omitempty"`
 }
-

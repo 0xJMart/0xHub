@@ -182,4 +182,3 @@ func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&v1.Project{}).
 		Complete(r)
 }
-

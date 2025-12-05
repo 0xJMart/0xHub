@@ -117,4 +117,3 @@ func seedProjects(store *store.Store) {
 	}
 	log.Println("Seeded", len(projects), "sample projects")
 }
-

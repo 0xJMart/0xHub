@@ -109,4 +109,3 @@ func (c *Client) doRequest(method, url string, body interface{}, result interfac
 
 	return nil
 }
-

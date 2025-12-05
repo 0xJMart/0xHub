@@ -71,4 +71,3 @@ func (s *Store) Delete(id string) bool {
 	delete(s.projects, id)
 	return true
 }
-

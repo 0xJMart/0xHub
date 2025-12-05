@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ProjectSpec defines the desired state of Project
@@ -185,4 +185,3 @@ func (in *ProjectList) DeepCopyObject() runtime.Object {
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 }
-

@@ -220,4 +220,3 @@ func TestStore_ConcurrentAccess(t *testing.T) {
 		t.Fatal("Project should exist after concurrent operations")
 	}
 }
-

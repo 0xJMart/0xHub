@@ -274,4 +274,3 @@ func TestDeleteProject_NotFound(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "project not found", response["error"])
 }
-

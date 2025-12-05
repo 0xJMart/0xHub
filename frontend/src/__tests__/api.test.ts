@@ -3,11 +3,13 @@ import { fetchProjects, fetchProject } from '../api'
 import { Project } from '../types'
 
 // Mock global fetch
-global.fetch = vi.fn()
+const mockFetch = vi.fn()
+globalThis.fetch = mockFetch as any
 
 describe('API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockFetch.mockClear()
   })
 
   describe('fetchProjects', () => {
@@ -22,19 +24,19 @@ describe('API', () => {
         },
       ]
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ projects: mockProjects }),
       })
 
       const result = await fetchProjects()
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:8080/api/projects')
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8080/api/projects')
       expect(result).toEqual(mockProjects)
     })
 
     it('should throw error when fetch fails', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
       })
@@ -43,7 +45,7 @@ describe('API', () => {
     })
 
     it('should handle network errors', async () => {
-      ;(global.fetch as any).mockRejectedValueOnce(new Error('Network error'))
+      mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
       await expect(fetchProjects()).rejects.toThrow('Network error')
     })
@@ -58,19 +60,19 @@ describe('API', () => {
         url: 'https://test.com',
       }
 
-      ;(global.fetch as any).mockResolvedValueOnce({
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockProject,
       })
 
       const result = await fetchProject('1')
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:8080/api/projects/1')
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8080/api/projects/1')
       expect(result).toEqual(mockProject)
     })
 
     it('should throw error when project not found', async () => {
-      ;(global.fetch as any).mockResolvedValueOnce({
+      mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,
       })

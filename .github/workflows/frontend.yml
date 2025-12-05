@@ -43,24 +43,50 @@ jobs:
 
       - name: Generate coverage report
         working-directory: frontend
-        run: npm run test:coverage -- --run
+        run: npm run test:coverage -- --run 2>&1 | tee coverage-output.txt
 
       - name: Install jq and bc
-        run: sudo apt-get update && sudo apt-get install -y jq bc
+        run: sudo apt-get update && sudo apt-get install -y jq bc python3
 
       - name: Check coverage threshold
         working-directory: frontend
         run: |
-          if [ -f coverage/coverage-summary.json ]; then
-            COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
-            echo "Coverage: ${COVERAGE}%"
-            THRESHOLD=70
-            if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-              echo "Coverage ${COVERAGE}% is below threshold of ${THRESHOLD}%"
-              exit 1
+          # Extract coverage from terminal output (format: "All files | XX.XX | ...")
+          COVERAGE=$(grep "All files" coverage-output.txt | awk '{print $4}' | head -1 || echo "0")
+          if [ -z "$COVERAGE" ] || [ "$COVERAGE" = "0" ]; then
+            # Fallback: calculate from coverage-final.json if available
+            if [ -f coverage/coverage-final.json ]; then
+              COVERAGE=$(python3 << 'EOF'
+import json
+import sys
+try:
+    with open('coverage/coverage-final.json', 'r') as f:
+        data = json.load(f)
+    total_lines = 0
+    covered_lines = 0
+    for file_data in data.values():
+        if isinstance(file_data, dict) and 's' in file_data:
+            statements = file_data['s']
+            for count in statements.values():
+                if count > 0:
+                    covered_lines += 1
+                total_lines += 1
+    if total_lines > 0:
+        pct = (covered_lines / total_lines) * 100
+        print(f"{pct:.2f}")
+    else:
+        print("0")
+except Exception as e:
+    print("0")
+EOF
+)
             fi
-          else
-            echo "Coverage file not found, skipping threshold check"
+          fi
+          echo "Coverage: ${COVERAGE}%"
+          THRESHOLD=70
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "Coverage ${COVERAGE}% is below threshold of ${THRESHOLD}%"
+            exit 1
           fi
 
       - name: Upload coverage to artifacts

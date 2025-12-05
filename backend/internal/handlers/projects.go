@@ -99,4 +99,3 @@ func (h *ProjectsHandler) DeleteProject(c *gin.Context) {
 		"message": "project deleted",
 	})
 }
-

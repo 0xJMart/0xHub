@@ -232,10 +232,9 @@ func TestClient_Timeout(t *testing.T) {
 	err := client.CreateProject(project)
 	assert.Error(t, err)
 	// Check for timeout-related error messages
-	assert.True(t, 
-		contains(err.Error(), "timeout") || 
-		contains(err.Error(), "deadline exceeded") ||
-		contains(err.Error(), "context deadline"),
+	assert.True(t,
+		contains(err.Error(), "timeout") ||
+			contains(err.Error(), "deadline exceeded") ||
+			contains(err.Error(), "context deadline"),
 		"Error should contain timeout-related message, got: %s", err.Error())
 }
-
