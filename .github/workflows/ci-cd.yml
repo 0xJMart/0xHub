@@ -26,15 +26,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check version script exists
+        run: |
+          if [ ! -f scripts/version.sh ]; then
+            echo "Error: scripts/version.sh not found" >&2
+            exit 1
+          fi
+
       - name: Extract version
         id: version
         run: |
           chmod +x scripts/version.sh
           source scripts/version.sh
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
-          echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
-          echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
 
   build-images:
     needs: version
@@ -43,6 +46,7 @@ jobs:
       contents: read
       packages: write
     strategy:
+      fail-fast: false
       matrix:
         component: [backend, frontend, operator]
     steps:
@@ -75,12 +79,24 @@ jobs:
           
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
+      - name: Verify Dockerfile exists
+        run: |
+          if [ ! -f ${{ matrix.component }}/Dockerfile ]; then
+            echo "Error: Dockerfile not found in ${{ matrix.component }}/" >&2
+            exit 1
+          fi
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./${{ matrix.component }}
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+            org.opencontainers.image.revision=${{ needs.version.outputs.git_sha }}
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -106,20 +122,69 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update Chart.yaml version
+      - name: Extract chart name and update Chart.yaml
+        id: chart
         run: |
-          sed -i "s/^version:.*/version: ${{ needs.version.outputs.version }}/" helm/0xhub/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"${{ needs.version.outputs.app_version }}\"/" helm/0xhub/Chart.yaml
+          CHART_DIR="helm/0xhub"
+          if [ ! -f "$CHART_DIR/Chart.yaml" ]; then
+            echo "Error: Chart.yaml not found in $CHART_DIR/" >&2
+            exit 1
+          fi
+          
+          # Extract chart name from Chart.yaml
+          CHART_NAME=$(grep '^name:' "$CHART_DIR/Chart.yaml" | sed 's/^name:[[:space:]]*//' | tr -d '"' | tr -d "'")
+          if [ -z "$CHART_NAME" ]; then
+            echo "Error: Could not extract chart name from Chart.yaml" >&2
+            exit 1
+          fi
+          
+          # Update version and appVersion with validation
+          VERSION="${{ needs.version.outputs.version }}"
+          APP_VERSION="${{ needs.version.outputs.app_version }}"
+          
+          # Validate versions are not empty
+          if [ -z "$VERSION" ] || [ -z "$APP_VERSION" ]; then
+            echo "Error: Version or appVersion is empty" >&2
+            exit 1
+          fi
+          
+          # Update Chart.yaml
+          sed -i "s/^version:.*/version: $VERSION/" "$CHART_DIR/Chart.yaml"
+          sed -i "s/^appVersion:.*/appVersion: \"$APP_VERSION\"/" "$CHART_DIR/Chart.yaml"
+          
+          # Verify the update worked
+          if ! grep -q "^version: $VERSION" "$CHART_DIR/Chart.yaml"; then
+            echo "Error: Failed to update version in Chart.yaml" >&2
+            exit 1
+          fi
+          if ! grep -q "^appVersion: \"$APP_VERSION\"" "$CHART_DIR/Chart.yaml"; then
+            echo "Error: Failed to update appVersion in Chart.yaml" >&2
+            exit 1
+          fi
+          
+          echo "chart_name=$CHART_NAME" >> $GITHUB_OUTPUT
+          echo "Chart name: $CHART_NAME"
+          echo "Updated version to: $VERSION"
+          echo "Updated appVersion to: $APP_VERSION"
 
       - name: Package Helm chart
         run: |
           helm package helm/0xhub --destination /tmp/chart
+          CHART_COUNT=$(ls -1 /tmp/chart/*.tgz 2>/dev/null | wc -l)
+          if [ "$CHART_COUNT" -eq 0 ]; then
+            echo "Error: Helm package failed - no .tgz file created" >&2
+            exit 1
+          fi
 
       - name: Push Helm chart to OCI registry
         run: |
           CHART_FILE=$(ls /tmp/chart/*.tgz)
-          helm push $CHART_FILE oci://${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}
+          if [ -z "$CHART_FILE" ] || [ ! -f "$CHART_FILE" ]; then
+            echo "Error: Chart file not found" >&2
+            exit 1
+          fi
+          helm push "$CHART_FILE" oci://${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}
 
       - name: Output chart location
         run: |
-          echo "Helm chart published to: oci://${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/0xhub:${{ needs.version.outputs.version }}"
+          echo "Helm chart published to: oci://${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.chart.outputs.chart_name }}:${{ needs.version.outputs.version }}"
