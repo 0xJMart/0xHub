@@ -56,30 +56,7 @@ jobs:
           if [ -z "$COVERAGE" ] || [ "$COVERAGE" = "0" ]; then
             # Fallback: calculate from coverage-final.json if available
             if [ -f coverage/coverage-final.json ]; then
-              COVERAGE=$(python3 << 'EOF'
-import json
-import sys
-try:
-    with open('coverage/coverage-final.json', 'r') as f:
-        data = json.load(f)
-    total_lines = 0
-    covered_lines = 0
-    for file_data in data.values():
-        if isinstance(file_data, dict) and 's' in file_data:
-            statements = file_data['s']
-            for count in statements.values():
-                if count > 0:
-                    covered_lines += 1
-                total_lines += 1
-    if total_lines > 0:
-        pct = (covered_lines / total_lines) * 100
-        print(f"{pct:.2f}")
-    else:
-        print("0")
-except Exception as e:
-    print("0")
-EOF
-)
+              COVERAGE=$(python3 -c "import json; data = json.load(open('coverage/coverage-final.json')); total = sum(1 for f in data.values() if isinstance(f, dict) and 's' in f for c in f['s'].values() if c > 0); lines = sum(1 for f in data.values() if isinstance(f, dict) and 's' in f for _ in f['s'].values()); print(f'{(total/lines*100):.2f}' if lines > 0 else '0')" 2>/dev/null || echo "0")
             fi
           fi
           echo "Coverage: ${COVERAGE}%"
