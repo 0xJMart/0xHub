@@ -179,6 +179,88 @@ Projects have the following structure:
 
 **See [TESTING.md](TESTING.md) for detailed testing documentation.**
 
+## CI/CD
+
+The project includes a GitHub Actions workflow that automatically builds and publishes Docker images and Helm charts to GitHub Container Registry (GHCR).
+
+### Workflow Overview
+
+The CI/CD pipeline (`/.github/workflows/ci-cd.yml`) runs on:
+- Push to `main` branch (development builds)
+- Git tags matching `v*` pattern (release builds)
+- Manual trigger via `workflow_dispatch`
+
+### Versioning Strategy
+
+All builds use semantic versioning (semver):
+
+- **Release builds** (git tags like `v1.0.0`):
+  - Images tagged: `1.0.0`, `latest`
+  - Helm chart version: `1.0.0`
+  - Chart appVersion: `1.0.0`
+
+- **Development builds** (push to main):
+  - Images tagged: `0.0.0-<short-commit>`, `main`
+  - Helm chart version: `0.0.0-<short-commit>` (pre-release semver format)
+  - Chart appVersion: `0.0.0-<short-commit>`
+
+### Published Artifacts
+
+**Docker Images** (published to GHCR):
+- `ghcr.io/0xJMart/0xhub/backend:<version>`
+- `ghcr.io/0xJMart/0xhub/frontend:<version>`
+- `ghcr.io/0xJMart/0xhub/operator:<version>`
+
+**Helm Chart** (published as OCI artifact):
+- `oci://ghcr.io/0xJMart/0xhub/0xhub:<version>`
+
+### Using Published Images
+
+Pull and use the published Docker images:
+
+```bash
+# Pull a specific version
+docker pull ghcr.io/0xJMart/0xhub/backend:1.0.0
+docker pull ghcr.io/0xJMart/0xhub/frontend:1.0.0
+docker pull ghcr.io/0xJMart/0xhub/operator:1.0.0
+
+# Or use latest
+docker pull ghcr.io/0xJMart/0xhub/backend:latest
+```
+
+### Using Published Helm Chart
+
+Install the Helm chart from the OCI registry:
+
+```bash
+# Add the OCI registry (if needed)
+helm registry login ghcr.io
+
+# Install from OCI registry
+helm install 0xhub oci://ghcr.io/0xJMart/0xhub/0xhub --version 1.0.0
+
+# Or install latest
+helm install 0xhub oci://ghcr.io/0xJMart/0xhub/0xhub
+```
+
+### Triggering Builds
+
+**Automatic builds:**
+- Push to `main` branch triggers a development build
+- Create and push a git tag (e.g., `v1.0.0`) to trigger a release build
+
+**Manual builds:**
+- Go to Actions tab in GitHub
+- Select "CI/CD - Build and Publish" workflow
+- Click "Run workflow"
+
+### Version Script
+
+The version extraction is handled by `scripts/version.sh`, which:
+- Extracts version from git tags for releases
+- Generates semver pre-release versions for development builds
+- Ensures all versions are semver-compliant
+
 ## Testing
 
 See [TESTING.md](TESTING.md) for comprehensive testing documentation.

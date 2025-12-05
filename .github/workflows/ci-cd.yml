@@ -1,0 +1,125 @@
+name: CI/CD - Build and Publish
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/0xhub
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      app_version: ${{ steps.version.outputs.app_version }}
+      is_release: ${{ steps.version.outputs.is_release }}
+      git_sha: ${{ steps.version.outputs.git_sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          chmod +x scripts/version.sh
+          source scripts/version.sh
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
+          echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
+          echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
+
+  build-images:
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        component: [backend, frontend, operator]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine tags
+        id: tags
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          IS_RELEASE="${{ needs.version.outputs.is_release }}"
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.component }}"
+          
+          TAGS="${IMAGE}:${VERSION}"
+          if [ "$IS_RELEASE" = "true" ]; then
+            TAGS="${TAGS},${IMAGE}:latest"
+          else
+            TAGS="${TAGS},${IMAGE}:main"
+          fi
+          
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.component }}
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  package-helm:
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Chart.yaml version
+        run: |
+          sed -i "s/^version:.*/version: ${{ needs.version.outputs.version }}/" helm/0xhub/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${{ needs.version.outputs.app_version }}\"/" helm/0xhub/Chart.yaml
+
+      - name: Package Helm chart
+        run: |
+          helm package helm/0xhub --destination /tmp/chart
+
+      - name: Push Helm chart to OCI registry
+        run: |
+          CHART_FILE=$(ls /tmp/chart/*.tgz)
+          helm push $CHART_FILE oci://${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}
+
+      - name: Output chart location
+        run: |
+          echo "Helm chart published to: oci://${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/0xhub:${{ needs.version.outputs.version }}"
