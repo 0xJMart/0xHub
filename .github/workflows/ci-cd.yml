@@ -68,7 +68,9 @@ jobs:
         run: |
           VERSION="${{ needs.version.outputs.version }}"
           IS_RELEASE="${{ needs.version.outputs.is_release }}"
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.component }}"
+          # Convert repository owner to lowercase for Docker compatibility
+          REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE="${{ env.REGISTRY }}/${REPO_OWNER_LOWER}/0xhub/${{ matrix.component }}"
           
           TAGS="${IMAGE}:${VERSION}"
           if [ "$IS_RELEASE" = "true" ]; then
@@ -183,8 +185,11 @@ jobs:
             echo "Error: Chart file not found" >&2
             exit 1
           fi
-          helm push "$CHART_FILE" oci://${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}
+          # Convert repository owner to lowercase for OCI registry compatibility
+          REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          helm push "$CHART_FILE" oci://${{ env.REGISTRY }}/${REPO_OWNER_LOWER}/0xhub
 
       - name: Output chart location
         run: |
-          echo "Helm chart published to: oci://${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.chart.outputs.chart_name }}:${{ needs.version.outputs.version }}"
+          REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "Helm chart published to: oci://${{ env.REGISTRY }}/${REPO_OWNER_LOWER}/0xhub/${{ steps.chart.outputs.chart_name }}:${{ needs.version.outputs.version }}"
