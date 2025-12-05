@@ -4,7 +4,7 @@
 # Backend configuration
 backend:
   image:
-    repository: ghcr.io/0xJMart/0xhub/backend
+    repository: ghcr.io/0xjmart/0xhub/backend
     tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 1
@@ -22,7 +22,7 @@ backend:
 # Frontend configuration
 frontend:
   image:
-    repository: ghcr.io/0xJMart/0xhub/frontend
+    repository: ghcr.io/0xjmart/0xhub/frontend
     tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 1
@@ -40,7 +40,7 @@ frontend:
 # Operator configuration
 operator:
   image:
-    repository: ghcr.io/0xJMart/0xhub/operator
+    repository: ghcr.io/0xjmart/0xhub/operator
     tag: "latest"
     pullPolicy: IfNotPresent
   replicaCount: 1

@@ -6,7 +6,14 @@ set -e
 
 # Get the git reference (tag or branch)
 GIT_REF="${GITHUB_REF:-$(git rev-parse --abbrev-ref HEAD)}"
-GIT_SHA="${GITHUB_SHA:-$(git rev-parse --short HEAD)}"
+# Use short SHA (7 chars) for versions, full SHA for reference
+if [ -n "$GITHUB_SHA" ]; then
+  GIT_SHA_FULL="$GITHUB_SHA"
+  GIT_SHA="${GITHUB_SHA:0:7}"
+else
+  GIT_SHA_FULL=$(git rev-parse HEAD)
+  GIT_SHA=$(git rev-parse --short HEAD)
+fi
 
 # Check if this is a tag (release build)
 if [[ "$GIT_REF" =~ ^refs/tags/v?([0-9]+\.[0-9]+\.[0-9]+.*)$ ]]; then

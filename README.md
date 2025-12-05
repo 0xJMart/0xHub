@@ -207,12 +207,12 @@ All builds use semantic versioning (semver):
 ### Published Artifacts
 
 **Docker Images** (published to GHCR):
-- `ghcr.io/0xJMart/0xhub/backend:<version>`
-- `ghcr.io/0xJMart/0xhub/frontend:<version>`
-- `ghcr.io/0xJMart/0xhub/operator:<version>`
+- `ghcr.io/0xjmart/0xhub/backend:<version>`
+- `ghcr.io/0xjmart/0xhub/frontend:<version>`
+- `ghcr.io/0xjmart/0xhub/operator:<version>`
 
 **Helm Chart** (published as OCI artifact):
-- `oci://ghcr.io/0xJMart/0xhub/0xhub:<version>`
+- `oci://ghcr.io/0xjmart/0xhub/0xhub:<version>`
 
 ### Using Published Images
 
@@ -220,12 +220,12 @@ Pull and use the published Docker images:
 
 ```bash
 # Pull a specific version
-docker pull ghcr.io/0xJMart/0xhub/backend:1.0.0
-docker pull ghcr.io/0xJMart/0xhub/frontend:1.0.0
-docker pull ghcr.io/0xJMart/0xhub/operator:1.0.0
+docker pull ghcr.io/0xjmart/0xhub/backend:1.0.0
+docker pull ghcr.io/0xjmart/0xhub/frontend:1.0.0
+docker pull ghcr.io/0xjmart/0xhub/operator:1.0.0
 
 # Or use latest
-docker pull ghcr.io/0xJMart/0xhub/backend:latest
+docker pull ghcr.io/0xjmart/0xhub/backend:latest
 ```
 
 ### Using Published Helm Chart
@@ -237,10 +237,10 @@ Install the Helm chart from the OCI registry:
 helm registry login ghcr.io
 
 # Install from OCI registry
-helm install 0xhub oci://ghcr.io/0xJMart/0xhub/0xhub --version 1.0.0
+helm install 0xhub oci://ghcr.io/0xjmart/0xhub/0xhub --version 1.0.0
 
 # Or install latest
-helm install 0xhub oci://ghcr.io/0xJMart/0xhub/0xhub
+helm install 0xhub oci://ghcr.io/0xjmart/0xhub/0xhub
 ```
 
 ### Triggering Builds
