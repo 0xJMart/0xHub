@@ -11,6 +11,7 @@ This Helm chart deploys the 0xHub project hub with all its components:
 - Kubernetes 1.24+
 - Helm 3.0+
 - kubectl configured to access your cluster
+- **For private images**: See [AUTHENTICATION.md](./AUTHENTICATION.md) for setting up GHCR authentication
 
 ## Installation
 

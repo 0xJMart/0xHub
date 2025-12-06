@@ -1,6 +1,15 @@
 # Default values for 0xhub
 # This is a YAML-formatted file.
 
+# Image pull secrets for private container registries
+# Create a secret with: kubectl create secret docker-registry ghcr-secret \
+#   --docker-server=ghcr.io \
+#   --docker-username=<GITHUB_USERNAME> \
+#   --docker-password=<GITHUB_TOKEN> \
+#   --namespace=0xhub
+imagePullSecrets: []
+# - name: ghcr-secret
+
 # Backend configuration
 backend:
   image:
