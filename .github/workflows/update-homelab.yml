@@ -1,0 +1,146 @@
+name: Update Homelab Deployment
+
+on:
+  workflow_run:
+    workflows: ["CI/CD - Build and Publish"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Chart version to deploy (leave empty to use latest from workflow)'
+        required: false
+        type: string
+
+jobs:
+  update-homelab:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout 0xHub repository
+        uses: actions/checkout@v4
+        with:
+          path: 0xhub-repo
+
+      - name: Get version from workflow run
+        id: version
+        if: github.event_name == 'workflow_run'
+        run: |
+          cd 0xhub-repo
+          
+          # Checkout the commit that triggered the original workflow
+          HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+          git fetch --tags
+          git checkout "$HEAD_SHA"
+          
+          # Try to extract version from Chart.yaml at that commit
+          if [ -f helm/0xhub/Chart.yaml ]; then
+            VERSION=$(grep '^version:' helm/0xhub/Chart.yaml | sed 's/^version:[[:space:]]*//' | tr -d '"' | tr -d "'")
+          fi
+          
+          # If not found, try to get from git tag
+          if [ -z "$VERSION" ]; then
+            # Check if HEAD is a tag
+            TAG=$(git describe --exact-match --tags "$HEAD_SHA" 2>/dev/null || echo "")
+            if [ -n "$TAG" ]; then
+              VERSION=$(echo "$TAG" | sed 's/^v//')
+            else
+              # Get the latest tag
+              LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+              if [ -n "$LATEST_TAG" ]; then
+                VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+              fi
+            fi
+          fi
+          
+          # Remove 'v' prefix if present
+          VERSION=$(echo "$VERSION" | sed 's/^v//')
+          
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not determine version from commit $HEAD_SHA" >&2
+            exit 1
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
+
+      - name: Use provided version
+        id: version
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          # Remove 'v' prefix if present
+          VERSION=$(echo "$VERSION" | sed 's/^v//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using provided version: $VERSION"
+
+      - name: Extract version from Chart.yaml
+        id: version
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == ''
+        run: |
+          cd 0xhub-repo
+          if [ -f helm/0xhub/Chart.yaml ]; then
+            VERSION=$(grep '^version:' helm/0xhub/Chart.yaml | sed 's/^version:[[:space:]]*//' | tr -d '"' | tr -d "'")
+            # Remove 'v' prefix if present
+            VERSION=$(echo "$VERSION" | sed 's/^v//')
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "Extracted version from Chart.yaml: $VERSION"
+          else
+            echo "Error: Chart.yaml not found and no version provided" >&2
+            exit 1
+          fi
+
+      - name: Checkout Homelab repository
+        uses: actions/checkout@v4
+        with:
+          repository: 0xJMart/Homelab
+          path: homelab-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update OCIRepository ref.tag
+        working-directory: homelab-repo
+        run: |
+          REPO_FILE="cluster/sources/0xhub-repo.yaml"
+          
+          if [ ! -f "$REPO_FILE" ]; then
+            echo "Error: $REPO_FILE not found. Please create it first." >&2
+            exit 1
+          fi
+          
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Update the ref.tag field in the OCIRepository
+          # Use yq if available, otherwise use sed
+          if command -v yq &> /dev/null; then
+            yq eval ".spec.ref.tag = \"$VERSION\"" -i "$REPO_FILE"
+          else
+            # Fallback to sed (less robust but works for simple cases)
+            sed -i "s/^\([[:space:]]*tag:[[:space:]]*\).*/\1\"$VERSION\"/" "$REPO_FILE"
+          fi
+          
+          echo "Updated OCIRepository ref.tag to: $VERSION"
+          cat "$REPO_FILE"
+
+      - name: Commit and push changes
+        working-directory: homelab-repo
+        run: |
+          git add cluster/sources/0xhub-repo.yaml
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          git commit -m "chore: update 0xhub chart version to ${{ steps.version.outputs.version }}"
+          git push
+
