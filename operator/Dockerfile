@@ -27,10 +27,12 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o manager c
 FROM alpine:latest
 
 WORKDIR /
-COPY --from=builder /workspace/manager .
 
 # Install ca-certificates for HTTPS
-RUN apk --no-cache add ca-certificates
+# Use --no-cache and update index first for better multi-platform compatibility
+RUN apk update && apk --no-cache add ca-certificates && rm -rf /var/cache/apk/*
+
+COPY --from=builder /workspace/manager .
 
 ENTRYPOINT ["/manager"]
 
