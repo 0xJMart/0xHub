@@ -17,7 +17,7 @@ on:
 jobs:
   update-homelab:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     permissions:
       contents: write
     steps:
@@ -26,73 +26,67 @@ jobs:
         with:
           path: 0xhub-repo
 
-      - name: Get version from workflow run
+      - name: Determine version
         id: version
-        if: github.event_name == 'workflow_run'
         run: |
           cd 0xhub-repo
           
-          # Checkout the commit that triggered the original workflow
-          HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-          git fetch --tags
-          git checkout "$HEAD_SHA"
+          VERSION=""
           
-          # Try to extract version from Chart.yaml at that commit
-          if [ -f helm/0xhub/Chart.yaml ]; then
-            VERSION=$(grep '^version:' helm/0xhub/Chart.yaml | sed 's/^version:[[:space:]]*//' | tr -d '"' | tr -d "'")
-          fi
+          # Case 1: workflow_dispatch with provided version
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            echo "Using provided version: $VERSION"
           
-          # If not found, try to get from git tag
-          if [ -z "$VERSION" ]; then
-            # Check if HEAD is a tag
-            TAG=$(git describe --exact-match --tags "$HEAD_SHA" 2>/dev/null || echo "")
-            if [ -n "$TAG" ]; then
-              VERSION=$(echo "$TAG" | sed 's/^v//')
+          # Case 2: workflow_dispatch without version - extract from Chart.yaml
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -f helm/0xhub/Chart.yaml ]; then
+              VERSION=$(grep '^version:' helm/0xhub/Chart.yaml | sed 's/^version:[[:space:]]*//' | tr -d '"' | tr -d "'")
+              echo "Extracted version from Chart.yaml: $VERSION"
             else
-              # Get the latest tag
-              LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-              if [ -n "$LATEST_TAG" ]; then
-                VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+              echo "Error: Chart.yaml not found and no version provided" >&2
+              exit 1
+            fi
+          
+          # Case 3: workflow_run - extract from the commit that triggered the workflow
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+            git fetch --tags
+            git checkout "$HEAD_SHA"
+            
+            # Try to extract version from Chart.yaml at that commit
+            if [ -f helm/0xhub/Chart.yaml ]; then
+              VERSION=$(grep '^version:' helm/0xhub/Chart.yaml | sed 's/^version:[[:space:]]*//' | tr -d '"' | tr -d "'")
+            fi
+            
+            # If not found, try to get from git tag
+            if [ -z "$VERSION" ]; then
+              # Check if HEAD is a tag
+              TAG=$(git describe --exact-match --tags "$HEAD_SHA" 2>/dev/null || echo "")
+              if [ -n "$TAG" ]; then
+                VERSION=$(echo "$TAG" | sed 's/^v//')
+              else
+                # Get the latest tag
+                LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+                if [ -n "$LATEST_TAG" ]; then
+                  VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+                fi
               fi
             fi
+            
+            echo "Detected version from workflow run: $VERSION"
           fi
           
           # Remove 'v' prefix if present
           VERSION=$(echo "$VERSION" | sed 's/^v//')
           
           if [ -z "$VERSION" ]; then
-            echo "Error: Could not determine version from commit $HEAD_SHA" >&2
+            echo "Error: Could not determine version" >&2
             exit 1
           fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Detected version: $VERSION"
-
-      - name: Use provided version
-        id: version
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          # Remove 'v' prefix if present
-          VERSION=$(echo "$VERSION" | sed 's/^v//')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Using provided version: $VERSION"
-
-      - name: Extract version from Chart.yaml
-        id: version
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == ''
-        run: |
-          cd 0xhub-repo
-          if [ -f helm/0xhub/Chart.yaml ]; then
-            VERSION=$(grep '^version:' helm/0xhub/Chart.yaml | sed 's/^version:[[:space:]]*//' | tr -d '"' | tr -d "'")
-            # Remove 'v' prefix if present
-            VERSION=$(echo "$VERSION" | sed 's/^v//')
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "Extracted version from Chart.yaml: $VERSION"
-          else
-            echo "Error: Chart.yaml not found and no version provided" >&2
-            exit 1
-          fi
+          echo "Final version: $VERSION"
 
       - name: Checkout Homelab repository
         uses: actions/checkout@v4
