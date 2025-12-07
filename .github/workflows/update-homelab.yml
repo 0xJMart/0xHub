@@ -106,6 +106,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+
       - name: Update OCIRepository ref.tag
         working-directory: homelab-repo
         run: |
@@ -118,16 +124,23 @@ jobs:
           
           VERSION="${{ steps.version.outputs.version }}"
           
-          # Update the ref.tag field in the OCIRepository
-          # Use yq if available, otherwise use sed
-          if command -v yq &> /dev/null; then
-            yq eval ".spec.ref.tag = \"$VERSION\"" -i "$REPO_FILE"
-          else
-            # Fallback to sed (less robust but works for simple cases)
-            sed -i "s/^\([[:space:]]*tag:[[:space:]]*\).*/\1\"$VERSION\"/" "$REPO_FILE"
+          # Check current version to avoid unnecessary commits
+          CURRENT_VERSION=$(yq eval '.spec.ref.tag' "$REPO_FILE" || echo "")
+          if [ "$CURRENT_VERSION" = "$VERSION" ]; then
+            echo "Version already set to $VERSION, no update needed"
+            exit 0
           fi
           
-          echo "Updated OCIRepository ref.tag to: $VERSION"
+          # Update the ref.tag field in the OCIRepository
+          yq eval ".spec.ref.tag = \"$VERSION\"" -i "$REPO_FILE"
+          
+          # Validate the updated YAML syntax
+          yq eval . "$REPO_FILE" > /dev/null || {
+            echo "Error: Updated YAML is invalid" >&2
+            exit 1
+          }
+          
+          echo "Updated OCIRepository ref.tag from $CURRENT_VERSION to $VERSION"
           cat "$REPO_FILE"
 
       - name: Commit and push changes
