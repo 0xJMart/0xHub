@@ -91,12 +91,18 @@ jobs:
         with:
           repository: 0xJMart/Homelab
           path: homelab-repo
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.HOMELAB_REPO_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
+        working-directory: homelab-repo
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Configure git to use the token for pushing
+          if [ -n "${{ secrets.HOMELAB_REPO_TOKEN }}" ]; then
+            git remote set-url origin https://${{ secrets.HOMELAB_REPO_TOKEN }}@github.com/0xJMart/Homelab.git
+          fi
 
       - name: Install yq
         run: |
