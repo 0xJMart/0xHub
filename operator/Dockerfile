@@ -23,14 +23,14 @@ COPY cmd/ cmd/
 # Build
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o manager cmd/manager/main.go
 
-# Final stage
+# Final stage - use distroless or minimal alpine
 FROM alpine:latest
 
 WORKDIR /
 
-# Install ca-certificates for HTTPS
-# Use --no-cache and update index first for better multi-platform compatibility
-RUN apk update && apk --no-cache add ca-certificates && rm -rf /var/cache/apk/*
+# Copy ca-certificates from builder stage (already has them from golang base image)
+# This avoids apk install issues during ARM64 emulation
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 COPY --from=builder /workspace/manager .
 
