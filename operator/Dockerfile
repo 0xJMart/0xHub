@@ -1,6 +1,10 @@
 # Build stage
 FROM golang:1.24-alpine AS builder
 
+# Declare build args for multi-platform support
+ARG TARGETARCH
+ARG TARGETOS=linux
+
 WORKDIR /workspace
 
 # Copy go mod files
@@ -17,9 +21,6 @@ COPY internal/ internal/
 COPY cmd/ cmd/
 
 # Build
-# Use TARGETARCH and TARGETOS build args for multi-platform support
-ARG TARGETARCH
-ARG TARGETOS=linux
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o manager cmd/manager/main.go
 
 # Final stage
