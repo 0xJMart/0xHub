@@ -23,6 +23,9 @@ FROM nginx:alpine
 # Install envsubst for template substitution
 RUN apk add --no-cache gettext
 
+# Ensure conf.d directory exists and is writable
+RUN mkdir -p /etc/nginx/conf.d && chmod 755 /etc/nginx/conf.d
+
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
