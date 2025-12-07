@@ -5,8 +5,6 @@ on:
     workflows: ["CI/CD - Build and Publish"]
     types:
       - completed
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       version:
@@ -17,7 +15,11 @@ on:
 jobs:
   update-homelab:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.event_name == 'workflow_run' && 
+       github.event.workflow_run.conclusion == 'success' && 
+       github.event.workflow_run.head_branch == '')
     permissions:
       contents: write
     steps:
@@ -48,33 +50,29 @@ jobs:
               exit 1
             fi
           
-          # Case 3: workflow_run - extract from the commit that triggered the workflow
+          # Case 3: workflow_run - only runs for tags/releases
+          # Extract from the tag that triggered the workflow
           elif [ "${{ github.event_name }}" = "workflow_run" ]; then
             HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
             git fetch --tags
             git checkout "$HEAD_SHA"
             
-            # Try to extract version from Chart.yaml at that commit
-            if [ -f helm/0xhub/Chart.yaml ]; then
-              VERSION=$(grep '^version:' helm/0xhub/Chart.yaml | sed 's/^version:[[:space:]]*//' | tr -d '"' | tr -d "'")
-            fi
-            
-            # If not found, try to get from git tag
-            if [ -z "$VERSION" ]; then
-              # Check if HEAD is a tag
-              TAG=$(git describe --exact-match --tags "$HEAD_SHA" 2>/dev/null || echo "")
-              if [ -n "$TAG" ]; then
-                VERSION=$(echo "$TAG" | sed 's/^v//')
+            # For tag-triggered runs, the commit should be a tag
+            # Check if HEAD is a tag (this should always be true for tag-triggered runs)
+            TAG=$(git describe --exact-match --tags "$HEAD_SHA" 2>/dev/null || echo "")
+            if [ -n "$TAG" ]; then
+              VERSION=$(echo "$TAG" | sed 's/^v//')
+              echo "Detected version from tag: $TAG -> $VERSION"
+            else
+              # Fallback: try to extract from Chart.yaml
+              if [ -f helm/0xhub/Chart.yaml ]; then
+                VERSION=$(grep '^version:' helm/0xhub/Chart.yaml | sed 's/^version:[[:space:]]*//' | tr -d '"' | tr -d "'")
+                echo "Extracted version from Chart.yaml: $VERSION"
               else
-                # Get the latest tag
-                LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-                if [ -n "$LATEST_TAG" ]; then
-                  VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
-                fi
+                echo "Error: Could not determine version from tag or Chart.yaml" >&2
+                exit 1
               fi
             fi
-            
-            echo "Detected version from workflow run: $VERSION"
           fi
           
           # Remove 'v' prefix if present
