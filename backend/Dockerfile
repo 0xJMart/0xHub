@@ -15,7 +15,10 @@ COPY cmd/ cmd/
 COPY internal/ internal/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o server cmd/server/main.go
+# Use TARGETARCH and TARGETOS build args for multi-platform support
+ARG TARGETARCH
+ARG TARGETOS=linux
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o server cmd/server/main.go
 
 # Final stage
 FROM alpine:latest
