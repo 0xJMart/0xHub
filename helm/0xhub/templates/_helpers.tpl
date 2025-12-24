@@ -2,12 +2,7 @@
 Expand the name of the chart.
 */}}
 {{- define "0xhub.name" -}}
-{{- $name := default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
-{{- if hasPrefix "0" $name }}
-{{- printf "x%s" $name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name }}
-{{- end }}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -59,24 +54,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Backend fullname
 */}}
 {{- define "0xhub.backend.fullname" -}}
-{{- $name := printf "%s-backend" (include "0xhub.fullname" .) }}
-{{- if hasPrefix "0" $name }}
-{{- printf "x%s" $name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
+{{- printf "%s-backend" (include "0xhub.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Frontend fullname
 */}}
 {{- define "0xhub.frontend.fullname" -}}
-{{- $name := printf "%s-frontend" (include "0xhub.fullname" .) }}
-{{- if hasPrefix "0" $name }}
-{{- printf "x%s" $name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
+{{- printf "%s-frontend" (include "0xhub.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
