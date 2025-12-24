@@ -51,17 +51,41 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Backend fullname
+Backend fullname (for Deployments - can start with number)
 */}}
 {{- define "0xhub.backend.fullname" -}}
 {{- printf "%s-backend" (include "0xhub.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
-Frontend fullname
+Backend service name (for Services - must start with letter)
+*/}}
+{{- define "0xhub.backend.serviceName" -}}
+{{- $name := printf "%s-backend" (include "0xhub.fullname" .) }}
+{{- if hasPrefix "0" $name }}
+{{- printf "x%s" $name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Frontend fullname (for Deployments - can start with number)
 */}}
 {{- define "0xhub.frontend.fullname" -}}
 {{- printf "%s-frontend" (include "0xhub.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Frontend service name (for Services - must start with letter)
+*/}}
+{{- define "0xhub.frontend.serviceName" -}}
+{{- $name := printf "%s-frontend" (include "0xhub.fullname" .) }}
+{{- if hasPrefix "0" $name }}
+{{- printf "x%s" $name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
 {{- end }}
 
 {{/*
