@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "hub.operator.fullname" . }}
-  namespace: {{ include "hub.namespace" . }}
+  name: {{ include "0xhub.operator.fullname" . }}
+  namespace: {{ include "0xhub.namespace" . }}
   labels:
-    {{- include "hub.operator.labels" . | nindent 4 }}
+    {{- include "0xhub.operator.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.operator.replicaCount }}
   selector:
     matchLabels:
-      {{- include "hub.operator.selectorLabels" . | nindent 6 }}
+      {{- include "0xhub.operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
@@ -17,12 +17,12 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
-        {{- include "hub.operator.selectorLabels" . | nindent 8 }}
+        {{- include "0xhub.operator.selectorLabels" . | nindent 8 }}
         {{- with .Values.operator.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      serviceAccountName: {{ include "hub.serviceAccountName" . }}
+      serviceAccountName: {{ include "0xhub.serviceAccountName" . }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -38,7 +38,7 @@ spec:
           command:
             - /manager
           args:
-            - --backend-url={{ if .Values.operator.backendURL }}{{ .Values.operator.backendURL }}{{ else }}{{ printf "http://%s:%v" (include "hub.backend.serviceName" .) (.Values.backend.service.port | int) }}{{ end }}
+            - --backend-url={{ if .Values.operator.backendURL }}{{ .Values.operator.backendURL }}{{ else }}{{ printf "http://%s:%v" (include "0xhub.backend.serviceName" .) (.Values.backend.service.port | int) }}{{ end }}
             - --metrics-bind-address=:8080
             - --health-probe-bind-address=:8081
             {{- if .Values.operator.leaderElection }}
@@ -56,7 +56,7 @@ spec:
               protocol: TCP
           env:
             - name: BACKEND_URL
-              value: {{ if .Values.operator.backendURL }}{{ .Values.operator.backendURL | quote }}{{ else }}{{ printf "http://%s:%v" (include "hub.backend.serviceName" .) (.Values.backend.service.port | int) | quote }}{{ end }}
+              value: {{ if .Values.operator.backendURL }}{{ .Values.operator.backendURL | quote }}{{ else }}{{ printf "http://%s:%v" (include "0xhub.backend.serviceName" .) (.Values.backend.service.port | int) | quote }}{{ end }}
             {{- with .Values.operator.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

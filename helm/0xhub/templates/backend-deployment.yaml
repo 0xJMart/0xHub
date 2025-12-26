@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "hub.backend.fullname" . }}
-  namespace: {{ include "hub.namespace" . }}
+  name: {{ include "0xhub.backend.fullname" . }}
+  namespace: {{ include "0xhub.namespace" . }}
   labels:
-    {{- include "hub.backend.labels" . | nindent 4 }}
+    {{- include "0xhub.backend.labels" . | nindent 4 }}
 spec:
   {{- if not (hasKey .Values "autoscaling") }}
   replicas: {{ .Values.backend.replicaCount }}
@@ -13,7 +13,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "hub.backend.selectorLabels" . | nindent 6 }}
+      {{- include "0xhub.backend.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
@@ -21,7 +21,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
-        {{- include "hub.backend.selectorLabels" . | nindent 8 }}
+        {{- include "0xhub.backend.selectorLabels" . | nindent 8 }}
         {{- with .Values.backend.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

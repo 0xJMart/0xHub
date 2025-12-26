@@ -4,7 +4,7 @@ kind: Namespace
 metadata:
   name: {{ .Values.namespace.name }}
   labels:
-    {{- include "hub.labels" . | nindent 4 }}
+    {{- include "0xhub.labels" . | nindent 4 }}
     app.kubernetes.io/component: namespace
 {{- end }}
 

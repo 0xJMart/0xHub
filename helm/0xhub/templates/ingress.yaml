@@ -1,5 +1,5 @@
 {{- if and .Values.ingress (hasKey .Values.ingress "enabled") .Values.ingress.enabled -}}
-{{- $fullName := include "hub.frontend.fullname" . -}}
+{{- $fullName := include "0xhub.frontend.fullname" . -}}
 {{- $svcPort := .Values.frontend.service.port -}}
 {{- if and .Values.ingress.className (not (hasPrefix "gke.io" .Values.ingress.className)) }}
 {{- if not (hasSuffix "-" .Values.ingress.className) }}
@@ -17,9 +17,9 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: {{ $fullName }}
-  namespace: {{ include "hub.namespace" . }}
+  namespace: {{ include "0xhub.namespace" . }}
   labels:
-    {{- include "hub.frontend.labels" . | nindent 4 }}
+    {{- include "0xhub.frontend.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
