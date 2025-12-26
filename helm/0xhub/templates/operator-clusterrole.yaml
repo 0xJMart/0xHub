@@ -7,7 +7,7 @@ metadata:
     {{- include "0xhub.operator.labels" . | nindent 4 }}
 rules:
 - apiGroups:
-  - 0xhub.0x0xhub.io
+  - hub.0xhub.io
   resources:
   - projects
   verbs:
@@ -19,7 +19,7 @@ rules:
   - patch
   - delete
 - apiGroups:
-  - 0xhub.0x0xhub.io
+  - hub.0xhub.io
   resources:
   - projects/status
   verbs:
@@ -27,7 +27,7 @@ rules:
   - update
   - patch
 - apiGroups:
-  - 0xhub.0x0xhub.io
+  - hub.0xhub.io
   resources:
   - projects/finalizers
   verbs:

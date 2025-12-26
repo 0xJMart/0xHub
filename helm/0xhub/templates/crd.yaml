@@ -2,7 +2,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: projects.0xhub.0x0xhub.io
+  name: projects.hub.0xhub.io
   labels:
     {{- include "0xhub.labels" . | nindent 4 }}
     app.kubernetes.io/component: crd
@@ -11,7 +11,7 @@ metadata:
     "helm.sh/hook-weight": "-5"
     "helm.sh/hook-delete-policy": before-hook-creation
 spec:
-  group: 0xhub.0x0xhub.io
+  group: hub.0xhub.io
   versions:
     - name: v1
       served: true
