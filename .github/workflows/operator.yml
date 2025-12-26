@@ -28,16 +28,6 @@ jobs:
           go-version: '1.24'
           cache-dependency-path: operator/go.sum
 
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-operator-${{ hashFiles('operator/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-operator-
-
       - name: Download dependencies
         working-directory: operator
         run: go mod download
