@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "0xhub.frontend.fullname" . }}
-  namespace: {{ include "0xhub.namespace" . }}
+  name: {{ include "hub.frontend.fullname" . }}
+  namespace: {{ include "hub.namespace" . }}
   labels:
-    {{- include "0xhub.frontend.labels" . | nindent 4 }}
+    {{- include "hub.frontend.labels" . | nindent 4 }}
 spec:
   {{- if not (hasKey .Values "autoscaling") }}
   replicas: {{ .Values.frontend.replicaCount }}
@@ -13,7 +13,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "0xhub.frontend.selectorLabels" . | nindent 6 }}
+      {{- include "hub.frontend.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
@@ -21,7 +21,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
-        {{- include "0xhub.frontend.selectorLabels" . | nindent 8 }}
+        {{- include "hub.frontend.selectorLabels" . | nindent 8 }}
         {{- with .Values.frontend.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -44,9 +44,9 @@ spec:
               protocol: TCP
           env:
             - name: VITE_API_URL
-              value: "http://{{ include "0xhub.backend.fullname" . }}:{{ .Values.backend.service.port }}/api"
+              value: "http://{{ include "hub.backend.serviceName" . }}:{{ .Values.backend.service.port }}/api"
             - name: BACKEND_URL
-              value: "http://{{ include "0xhub.backend.fullname" . }}:{{ .Values.backend.service.port }}"
+              value: "http://{{ include "hub.backend.serviceName" . }}:{{ .Values.backend.service.port }}"
             {{- with .Values.frontend.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

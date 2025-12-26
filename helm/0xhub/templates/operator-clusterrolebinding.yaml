@@ -2,16 +2,16 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "0xhub.operator.fullname" . }}
+  name: {{ include "hub.operator.fullname" . }}
   labels:
-    {{- include "0xhub.operator.labels" . | nindent 4 }}
+    {{- include "hub.operator.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "0xhub.operator.fullname" . }}
+  name: {{ include "hub.operator.fullname" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "0xhub.serviceAccountName" . }}
-  namespace: {{ include "0xhub.namespace" . }}
+  name: {{ include "hub.serviceAccountName" . }}
+  namespace: {{ include "hub.namespace" . }}
 {{- end }}
 

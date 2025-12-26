@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "0xhub.backend.serviceName" . }}
-  namespace: {{ include "0xhub.namespace" . }}
+  name: {{ include "hub.backend.serviceName" . }}
+  namespace: {{ include "hub.namespace" . }}
   labels:
-    {{- include "0xhub.backend.labels" . | nindent 4 }}
+    {{- include "hub.backend.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.backend.service.type }}
   ports:
@@ -13,5 +13,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "0xhub.backend.selectorLabels" . | nindent 4 }}
+    {{- include "hub.backend.selectorLabels" . | nindent 4 }}
 
