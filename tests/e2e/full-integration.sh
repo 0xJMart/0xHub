@@ -142,6 +142,7 @@ spec:
         args:
         - --backend-url=${BACKEND_URL}
         image: ${OPERATOR_IMAGE}
+        imagePullPolicy: Never
         name: manager
         resources:
           limits:
