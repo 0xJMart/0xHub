@@ -1,6 +1,6 @@
 apiVersion: v2
-name: hub
-description: A Helm chart for Hub - Project Hub with CRD Operator
+name: 0xhub
+description: A Helm chart for 0xHub - Project Hub with CRD Operator
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
