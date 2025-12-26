@@ -78,6 +78,7 @@ jobs:
           fi
           
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "image=${IMAGE}" >> $GITHUB_OUTPUT
 
       - name: Verify Dockerfile exists
         run: |
@@ -97,8 +98,12 @@ jobs:
             org.opencontainers.image.version=${{ needs.version.outputs.version }}
             org.opencontainers.image.revision=${{ needs.version.outputs.git_sha }}
             org.opencontainers.image.source=${{ github.repositoryUrl }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ steps.tags.outputs.image }}:buildcache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=${{ steps.tags.outputs.image }}:buildcache,mode=max
 
   package-helm:
     needs: version

@@ -11,8 +11,9 @@ WORKDIR /workspace
 COPY go.mod go.mod
 COPY go.sum go.sum
 
-# Download dependencies
-RUN go mod download
+# Download dependencies with cache mount
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
 # Copy source code
 COPY api/ api/
@@ -20,8 +21,10 @@ COPY controllers/ controllers/
 COPY internal/ internal/
 COPY cmd/ cmd/
 
-# Build
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o manager cmd/manager/main.go
+# Build with cache mounts for modules and build cache
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o manager cmd/manager/main.go
 
 # Final stage - use distroless or minimal alpine
 FROM alpine:latest
