@@ -54,12 +54,26 @@ jobs:
           # Extract from the tag that triggered the workflow
           elif [ "${{ github.event_name }}" = "workflow_run" ]; then
             HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+            HEAD_BRANCH="${{ github.event.workflow_run.head_branch }}"
             git fetch --tags
             git checkout "$HEAD_SHA"
             
-            # For tag-triggered runs, the commit should be a tag
-            # Check if HEAD is a tag (this should always be true for tag-triggered runs)
-            TAG=$(git describe --exact-match --tags "$HEAD_SHA" 2>/dev/null || echo "")
+            # Try to get tag from head_branch first (for tag-triggered workflows, this is the tag name)
+            TAG=""
+            if [[ "$HEAD_BRANCH" =~ ^v[0-9] ]]; then
+              TAG="$HEAD_BRANCH"
+              echo "Using tag from head_branch: $TAG"
+            else
+              # Fallback: get all tags for this commit and use the latest one
+              # Sort tags by version number to get the most recent
+              ALL_TAGS=$(git tag --points-at "$HEAD_SHA" | grep -E '^v[0-9]' || echo "")
+              if [ -n "$ALL_TAGS" ]; then
+                # Sort tags by version (handles semver properly)
+                TAG=$(echo "$ALL_TAGS" | sort -V | tail -1)
+                echo "Using latest tag from commit: $TAG (from: $(echo "$ALL_TAGS" | tr '\n' ' '))"
+              fi
+            fi
+            
             if [ -n "$TAG" ]; then
               VERSION=$(echo "$TAG" | sed 's/^v//')
               echo "Detected version from tag: $TAG -> $VERSION"
